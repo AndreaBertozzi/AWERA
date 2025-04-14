@@ -11,8 +11,8 @@ if not config.Plotting.plots_interactive:
     # read from config-yaml in AWERA
     # read program starting dir again
     # interpret this time
-from . import resource_analysis
-from . import wind_profile_clustering
+#from . import resource_analysis
+#from . import wind_profile_clustering
 from . import power_production
 from . import eval
 from . import utils
