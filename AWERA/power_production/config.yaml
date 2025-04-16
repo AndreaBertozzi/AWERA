@@ -54,7 +54,7 @@ IO:
 Processing:
     parallel: False # True
     n_cores: 1
-    progress_out: 'stdout'  # default:'stderr' or 'stdout' printing pregress bar
+    progress_out: 'stderr'  # default:'stderr' or 'stdout' printing pregress bar
 
 Plotting:
     plots_interactive: False  # Don't save plots directly as pdf to result_dir

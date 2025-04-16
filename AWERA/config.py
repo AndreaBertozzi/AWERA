@@ -64,6 +64,7 @@ class Config:
             path_program_directory = os.path.dirname(__file__)
             path_config_yaml = os.path.join(
                 path_program_directory, '', config_file)
+            print(path_config_yaml)
         with open(path_config_yaml, 'r') as f:
             initial_config = yaml.safe_load(f)
         self.update(initial_config)

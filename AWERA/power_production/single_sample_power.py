@@ -15,7 +15,7 @@ from ..wind_profile_clustering.preprocess_data import \
 
 from .qsm import NormalisedWindTable1D
 
-from ..wind_profile_clustering.config import locations, file_name_cluster_labels
+#from ..wind_profile_clustering.config import locations, file_name_cluster_labels
 # from config_production import optimizer_history_file_name
 
 # Optimization trial runs

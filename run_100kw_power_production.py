@@ -2,6 +2,7 @@
 This sript runs the AWERA QSM power production for different kites and different reference heigts. 
 A range of starting settings is tested.
 """
+from pprint import pprint
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
@@ -9,16 +10,17 @@ import pickle
 from AWERA.power_production.config import Config
 from AWERA.power_production.power_production import PowerProduction
 
-from AWERA.power_production.qsm import LogProfile, TractionPhase
+from AWERA.power_production.qsm import LogProfile#, TractionPhase, Cycle, Environment
 
 from upscaling_kite_specs_and_settings import kite_qsm_settings, kite_sys_props
 # Get configuration from config.yaml file in power production
-config = Config()
+config = Config(init_dict = None, interpret = False)
 import os
 
+os.environ['SEL_ID'] = '0'
 sel_types = [
     # # 10m
-    # [0, 0, 0], # kite type
+    [0, 0, 1], # kite type
     # [0, 1, 0],
     # [1, 1, 0],
     # 100m
@@ -26,13 +28,13 @@ sel_types = [
     [0, 1, 1],
     [1, 1, 1]
     ]
-do_settings_scan = False  # True
+do_settings_scan = True  # True
 read_curve = False
 use_phase_eff = False  # True
 if do_settings_scan:
     # Scan kitepower 100kW system
     SEL_ID = 0  # 100kW or 500kW 10m or 100m ref
-    SCAN_SEL = int(os.environ['SEL_ID'])
+    SCAN_SEL = 2 # This correspoands to default # See line 68 #int(os.environ['SEL_ID'])
 else:
     SEL_ID = int(os.environ['SEL_ID'])
 # 500kW only
@@ -46,14 +48,21 @@ kite_source = kite_sel[sel[1]]
 add_plot_eval_dir = '{}kite_{}_kW/'.format(kite_source, rated_power)
 
 kite = kite_source + str(rated_power)
-print(kite)
+print('\n**Kite selected for analysis:**', kite), 
 sys_props = kite_sys_props[kite]
 settings = kite_qsm_settings[kite]
+
+print('\n**System properties**\n')
+pprint(sys_props)
+
+print('\n**QSM-settings**\n')
+pprint(settings)
+
 
 # Update bounds
 if kite == '100':
     # cycle start set to 150m at lowest, not optimised
-    bounds = [None, None, None, None, [150, 250], [0, 1]]
+    bounds = [None, None, None, None, [150, 250], [0, 1]]    
     x0 = [8000., 1000., 0.5, 240., 150.0, 1]
 elif 'kitepower' in kite:
     # Tether between 200 and 500m
@@ -63,12 +72,14 @@ elif 'kitepower' in kite:
     # x0 = [49000., 2000., 0.9, 300., 200.0, 1]
     # x0 = [5*49000., 2000., 0.9, 300., 200.0, 1]
 
-
+print('\n**OPTIMIZATION BOUNDS**')
+print('Original bounds: ', bounds)
 if do_settings_scan:
+    #  structure of settings: [[F_min, F_max], [v_reel_min, v_reel_max], course angle chi [deg], max_tether lenght, [min_el, max_el]]
     scan_opts = [
         [[500, None], [0.05, [10, 5]], 110, 500, [25, 60]],  # diff_max_vr  #  in out
         [[500, 78000], [0.05, [10, 5]], 110, 500, [25, 60]],  # diff_max_vr_kitepower  #  in out
-        [[500, None], [2, 10], 110, 500, [25, 60]],  # Default
+        [[500, None], [0.05, 10], 110, 500, [25, 60]],  # Default
         [[500, None], [0.05, 5], 110, 500, [25, 60]],  # low_min_max_vr
         [[500, 78000], [0.05, 5], 110, 500, [25, 60]],  # kitepower
         [[500, None], [0.5, 10], 110, 500, [25, 60]],  # low_min_vr
@@ -97,10 +108,11 @@ if do_settings_scan:
         ]
     scan_tag = scan_tags[SCAN_SEL] + '_'
     scan_opt = scan_opts[SCAN_SEL]
-    print('scan opt:', scan_opt, scan_tag)
+    #print('scan opt:', scan_opt, scan_tag)
     # Settings scan
     # System:
     # min tether force, reeling speed limits, course angle
+    
     sys_props['tether_force_min_limit'] = scan_opt[0][0]
     if scan_opt[0][1] is not None:
         sys_props['tether_force_max_limit'] = scan_opt[0][1]
@@ -117,11 +129,13 @@ if do_settings_scan:
     # max tether length, min/max elevation angle
     max_l = scan_opt[3]
     dl_max = max_l - x0[4]
-    bounds[3] = [150, dl_max]
+    bounds[3] = [150.0, dl_max]
     angles = scan_opt[4]
     bounds[2] = [angles[0]*np.pi/180, angles[1]*np.pi/180.]
 else:
     scan_tag = ''
+
+print('Updated bounds: ', bounds)
 
 if use_phase_eff:
     scan_tag += 'phase_eff_'
@@ -131,17 +145,21 @@ if use_phase_eff:
                                       'retraction': 1/0.65}
 ref_height_sel = [10, 100]
 ref_height = ref_height_sel[sel[2]]  # m
+print('\n**POWER CURVE SETTINGS**')
+print('Selected reference height: ', ref_height)
 
-wind_speeds_sel = {10: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-                        13, 14, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5, 19,
-                        19.5, 20, 21],
-                   100:  [3.5, 5, 8, 9, 10, 11, 14, 17, 20, 23, 25, 28],  #
+wind_speeds_sel = {10: [5, 8],
+                    #[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+                       # 13, 14, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5, 19,
+                        #19.5, 20, 21]#,
+                   100:  [5, 8, 9, 10], #, 11, 14, 17, 20, 23, 25, 28],  #
                    # [3.5, 5, 8, 9, 10, 10.5, 11, 11.5, 12, 13, 14, 15, 16, 17, 18.5, 20, 21.5, 23, 23.5, 25, 26.5, 28]
                          #  [4, 5, 6, 7, 8, 9, 10, 11, 12,
                          #  13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
                          #  23, 24, 25, 26, 27, 28, 29]
                    }  # m/s
 wind_speeds = wind_speeds_sel[ref_height]
+print('Selected wind speeds: ', wind_speeds)
 
 scan_tag = 'final_U_90_' + scan_tag  # short, high, final_ final_half_powering_stages  #less_cons_even_short_vw_I
 # scan_tag = 'final_half_powering' + scan_tag
@@ -170,29 +188,41 @@ config.update({'General': {'ref_height': ref_height},
                            }
                        }
                })
-print(config.IO.plot_output)
-setattr(config.IO, 'training_plot_output', config.IO.plot_output)
-print(config)
+#print(config.IO.plot_output)
+#setattr(config.IO, 'training_plot_output', config.IO.plot_output)
+#print(config)
 
 # Initialise power production functions class
 prod = PowerProduction(config)
 
-# Create pumping cycle simulation object, run simulation, and plot results.
-# cycle = Cycle(settings)
-# cycle.follow_wind = True
-# cycle.run_simulation(sys_props, env_state, print_summary=True)
-# cycle.time_plot(('reeling_speed', 'power_ground', 'tether_force_ground'),
+## DOES NOT WORK YET
+
+#Create pumping cycle simulation object, run simulation, and plot results.
+#cycle = Cycle(settings, impose_operational_limits=True)
+#env = Environment(5.5, 1.225)
+#cycle.follow_wind = True
+#env_state = LogProfile()
+#env_state.set_reference_height(ref_height)
+#env_state.set_reference_wind_speed(5.5)
+#heights = [10.,  20.,  40.,  60.,  80., 100., 120., 140., 150., 160.,
+#                        180., 200., 220., 250., 300., 500., 600.]
+#wind_speeds_at_h = [env_state.calculate_wind(h) for h in heights]
+#env_state.plot_wind_profile(color='#2ca02c')
+#plt.show()
+#print(env_state.air_density)
+#cycle.run_simulation(sys_props, env, print_summary=True)
+#cycle.time_plot(('reeling_speed', 'power_ground', 'tether_force_ground'),
 #                 ('Reeling\nspeed [m/s]', 'Power [W]', 'Tether\nforce [N]'))
 
-# cycle.trajectory_plot()
-# cycle.trajectory_plot3d()
-# plt.show()
+#cycle.trajectory_plot()
+#cycle.trajectory_plot3d()
+#plt.show()
 
 if read_curve:
     pc = prod.read_curve(i_profile='log', return_constructor=True)
     env_state = LogProfile()
     env_state.set_reference_height(ref_height)
-    env_state.set_reference_wind_speed(1)
+    env_state.set_reference_wind_speed(5.5)
     heights = [10.,  20.,  40.,  60.,  80., 100., 120., 140., 150., 160.,
                         180., 200., 220., 250., 300., 500., 600.]
     wind_speeds_at_h = [env_state.calculate_wind(h) for h in heights]
@@ -219,7 +249,7 @@ if read_curve:
     oc = prod.create_optimizer(env_state, wind_speeds[0],
                                sys_props=sys_props,
                                cycle_sim_settings=settings,
-                               print_details=True)
+                               print_details=False)
 else:
     pc, oc = prod.single_power_curve(
         wind_speeds,
@@ -230,8 +260,8 @@ else:
             title='{title}'+'_{}kw_log_profile_opt'.format(rated_power)),
         env_state=None,  # Defaults to Log Profile
         ref_height=ref_height,
-        return_optimizer=True,
-        print_details=True)
+        return_optimizer=False,
+        print_details=False)
     pc.export_results(config.IO.power_curve.format(i_profile='log',
                                                    suffix='pickle'))
 
@@ -239,6 +269,19 @@ wind_speed, mean_cycle_power = pc.curve()
 print(wind_speed, mean_cycle_power)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+""""
 # mask failed simulation, export only good results
 sel_succ = [kpis['sim_successful']
             for kpis in pc.performance_indicators]
@@ -317,3 +360,4 @@ wind_speed, mean_cycle_power = pc.curve()
 # op_res: optimizer output
 # cons: optimizer constraints
 # kpis: kite performance indicators
+"""

@@ -30,11 +30,11 @@ v = np.array([0]*len(heights))
 profile = prod.as_input_profile(heights, u, v)
 print(profile)
 
-pc = prod.read_curve(i_profile=1, return_constructor=True)
+#pc = prod.read_curve(i_profile=1, return_constructor=True)
 # # Roughly estimate wind speed cut-in/out limits
-# limit_estimates = prod.estimate_wind_speed_operational_limits(
-#    input_profiles=profile)
-# print(limit_estimates)
+limit_estimates = prod.estimate_wind_speed_operational_limits(
+    input_profiles=profile)
+print(limit_estimates)
 # # Run qsm simulation and optimisation for the full
 # # range of wind speeds
 # pcs, limits_refined = prod.make_power_curves(

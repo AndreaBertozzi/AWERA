@@ -1,10 +1,10 @@
-from .config import Config
-config = Config()
-if not config.Plotting.plots_interactive:
-    import matplotlib as mpl
-    mpl.use('Pdf')
-    print('Initial config with non-interactive plots'
-          ' - setting "Pdf" mode in matplotlib.')
+#from .config import Config
+#config = Config()
+#if not config.Plotting.plots_interactive:
+#    import matplotlib as mpl
+#    mpl.use('Pdf')
+#    print('Initial config with non-interactive plots'
+#          ' - setting "Pdf" mode in matplotlib.')
     # TODO this rules out local config
     # read from program sarting dir if possible, not interpreted
     # -> import settings
@@ -17,6 +17,6 @@ from . import power_production
 from . import eval
 from . import utils
 from . import validation
-from .awera import ChainAWERA
-from .location_selection import reference_locs
+#from .awera import ChainAWERA
+#from .location_selection import reference_locs
 # TODO make ref locs into config?

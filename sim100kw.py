@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from qsm import LogProfile, SystemProperties, TractionPhase, Cycle
+from AWERA.power_production.qsm import LogProfile, SystemProperties, TractionPhase, Cycle
 
 # Create environment object.
 env_state = LogProfile()
