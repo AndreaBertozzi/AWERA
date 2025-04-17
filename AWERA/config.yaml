@@ -10,7 +10,7 @@ General:
     # Write output of evaluation steps to files
     # Set this to False when using custom input to functions
     # to avoid overwriting of previous output obtained using config
-    write_output: True
+    write_output: False
 Power:
     profile_type: 'log_profile'
     # Estimate cut-in/out wind speeds for the model

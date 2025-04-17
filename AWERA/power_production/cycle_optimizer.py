@@ -889,6 +889,7 @@ class OptimizerCycle(Optimizer):
         x0_range_random = []
         # Optimization variables bounds defining the search space.
         bounds = self.bounds_real_scale
+        print('bounds: ', bounds)
         reduce_x = self.reduce_x
         print('x0:', x0)
         x0 = np.array(x0)

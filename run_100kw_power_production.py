@@ -73,6 +73,7 @@ elif 'kitepower' in kite:
     # x0 = [5*49000., 2000., 0.9, 300., 200.0, 1]
 
 print('\n**OPTIMIZATION BOUNDS**')
+print('Optimisation variables: F_out [N], F_in [N], El_angle [rad], \nReel-in tether length [m], Minimum tether length [m]')
 print('Original bounds: ', bounds)
 if do_settings_scan:
     #  structure of settings: [[F_min, F_max], [v_reel_min, v_reel_max], course angle chi [deg], max_tether lenght, [min_el, max_el]]
