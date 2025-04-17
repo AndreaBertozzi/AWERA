@@ -3,4 +3,4 @@ __*__
 *.pdf
 *.log
 *.svg
-.env/
+env/
